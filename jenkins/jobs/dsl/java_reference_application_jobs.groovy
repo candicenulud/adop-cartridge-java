@@ -6,8 +6,8 @@ def projectFolderName = "${PROJECT_NAME}"
 def projectNameKey = projectFolderName.toLowerCase().replace("/", "-")
 def referenceAppgitRepo = "spring-petclinic"
 def regressionTestGitRepo = "adop-cartridge-java-regression-tests"
-def referenceAppGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + referenceAppgitRepo
-def regressionTestGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + regressionTestGitRepo
+def referenceAppGitUrl = "ssh://git@gitlab:${PROJECT_NAME}/" + referenceAppgitRepo
+def regressionTestGitUrl = "ssh://git@gitlab:29418/${PROJECT_NAME}/" + regressionTestGitRepo
 
 // Jobs
 def buildAppJob = freeStyleJob(projectFolderName + "/Reference_Application_Build")
@@ -54,14 +54,13 @@ buildAppJob.with {
     }
     label("java8")
     triggers {
-        gerrit {
-            events {
-                refUpdated()
-            }
-            project(projectFolderName + '/' + referenceAppgitRepo, 'plain:master')
-            configure { node ->
-                node / serverName("ADOP Gerrit")
-            }
+        gitlabPush {
+            buildOnMergeRequestEvents(false)
+            buildOnPushEvents(true)
+            enableCiSkip(false)
+            setBuildDescription(false)
+            rebuildOpenMergeRequest('never')
+            includeBranches('master')
         }
     }
     steps {
